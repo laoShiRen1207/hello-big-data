@@ -344,4 +344,72 @@ scp -r jdk1.8.0_152/ root@192.168.8.202:/root/module
 scp -r hadoop-3.1.3/ root@192.168.8.202:/root/module
 ~~~
 
-`rsync`同步
+#### 2.3.1 Hadoop 配置文件
+
+|      | 8.201 | 8.202 | 8.203 |
+| ---- | ----- | ----- | ----- |
+| HDFS |       |       |       |
+| YARN |       |       |       |
+
+默认配置文件
+
+核心配置文件 `core-site.xml`
+
+~~~xml
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License. See accompanying LICENSE file.
+-->
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+    <!--指定name node 配置-->
+    <property>
+    	<name>fx.defaultFS</name>
+        <value>hdfs://192.168.8.202:8020</value>
+    </property>
+    <!--指定hadoop 存储目录-->
+    <property>
+    	<name>hadoop.tmp.dir</name>
+        <value>/root/module/hadoop-3.1.3/data</value>
+    </property>
+    <!--指定hdfs 静态用户-->
+    <property>
+    	<name>hadoop.http.staticuser.user</name>
+        <value>root</value>
+    </property>
+</configuration>
+~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
