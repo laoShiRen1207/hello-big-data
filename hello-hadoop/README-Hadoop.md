@@ -341,15 +341,15 @@ scp -r jdk1.8.0_152/ root@192.168.8.202:/root/module
 # 本地文件
 # 用户@主机:对应路径
 
-scp -r hadoop-3.1.3/ root@192.168.8.202:/root/module
+scp -r hadoop-3.1.3/ root@192.168.8.202:/opt/modules
 ~~~
 
 #### 2.3.1 Hadoop 配置文件
 
-|      | 8.201 | 8.202 | 8.203 |
-| ---- | ----- | ----- | ----- |
-| HDFS |       |       |       |
-| YARN |       |       |       |
+|      | 8.201             | 8.202                       | 8.203        |
+| ---- | ----------------- | --------------------------- | ------------ |
+| HDFS | NameNode DataNode | DataNode                    | SNN DataNode |
+| YARN | NodeManager       | ResourceManager NodeManager | NodeManager  |
 
 默认配置文件
 
@@ -358,22 +358,6 @@ scp -r hadoop-3.1.3/ root@192.168.8.202:/root/module
 ~~~xml
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-<!--
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License. See accompanying LICENSE file.
--->
-
-<!-- Put site-specific property overrides in this file. -->
-
 <configuration>
     <!--指定name node 配置-->
     <property>
@@ -383,7 +367,7 @@ scp -r hadoop-3.1.3/ root@192.168.8.202:/root/module
     <!--指定hadoop 存储目录-->
     <property>
     	<name>hadoop.tmp.dir</name>
-        <value>/root/module/hadoop-3.1.3/data</value>
+        <value>/opt/module/hadoop-3.1.3/data</value>
     </property>
     <!--指定hdfs 静态用户-->
     <property>
@@ -391,6 +375,79 @@ scp -r hadoop-3.1.3/ root@192.168.8.202:/root/module
         <value>root</value>
     </property>
 </configuration>
+~~~
+
+HDFS 配置文件
+
+~~~xml
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <!-- name node 访问地址 -->
+	<property>
+    	<name>dfs.namenode.http-address</name>
+        <value>192.168.8.201:9870</value>
+    </property>
+    <!-- second name node 访问地址 -->
+    <property>
+    	<name>dfs.namenode.secondary.http-address</name>
+        <value>192.168.8.203:9868</value>
+    </property>
+</configuration>
+~~~
+
+`YARN`配置文件
+
+~~~xml
+<?xml version="1.0"?>
+<configuration>
+    <!-- 指定MR走shuffle -->
+	<property>
+    	<name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+	<!-- resourceManager 访问地址 -->
+    <property>
+    	<name>yarn.resourcemanager.hostname</name>
+        <value>192.168.8.202</value>
+    </property>
+    <!-- 环境变量的继承 -->
+    <property>
+    	<name>yarn.nodemanager.env-whitelist</name>
+        <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAFRED_HOME</value>
+    </property>
+
+</configuration>
+~~~
+
+MapReduce 配置文件
+
+~~~xml
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <!-- 指定mapreduce 程序运行在yarn -->
+	<property>
+    	<name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+</configuration>
+~~~
+
+vi workers
+
+~~~text
+192.168.8.201
+192.168.8.202
+192.168.8.203
+~~~
+
+集群初始化
+
+~~~shell
+hdfs namenode -format
+
+sh start-dfs.sh
 ~~~
 
 
