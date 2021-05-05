@@ -83,7 +83,7 @@
 修改`ip`
 
 ~~~shell
-vi /etc/sysconf/network-scripts/ipcfg-ens33
+vi /etc/sysconf/network-scripts/ifcfg-ens33
 ~~~
 
 ![image-20210424150001545](.\static\image\image-20210424150001545.png)
@@ -127,7 +127,7 @@ tar -zxvf jdk***.tar.gz
 
 ~~~shell
 # Java_Home jdk 8
-export JAVA_HOME=/root/module/jdk1.8.0_152
+export JAVA_HOME=/home/module/jdk1.8.0_152
 export PATH=$PATH:$JAVA_HOME/bin
 ~~~
 
@@ -140,6 +140,13 @@ java -version
 java version "1.8.0_152"
 Java(TM) SE Runtime Environment (build 1.8.0_152-b16)
 Java HotSpot(TM) 64-Bit Server VM (build 25.152-b16, mixed mode)
+~~~
+
+无密登录
+
+~~~shell
+ssh-keygen -t rsa
+ssh-copy-id ip
 ~~~
 
 #### 2.1.1 安装Hadoop 3.1.3
@@ -156,7 +163,7 @@ tar -zxvf hadoop-3.1.3.tar.gz
 cat /etc/profile.d/my_hadoop_env.sh 
 #Hadoop hadoop 3.1.3
 
-export HADOOP_HOME=/root/module/hadoop-3.1.3
+export HADOOP_HOME=/home/module/hadoop-3.1.3
 
 export PATH=$PATH:$HADOOP_HOME/bin
 export PATH=$PATH:$HADOOP_HOME/sbin
@@ -328,6 +335,8 @@ zhoujielun	1
 
 ### 2.3 完全分布式集群
 
+#### 2.3.1 准备工作
+
 在创建2个完全一致的虚拟机，可以不装`JDK`和`hadoop`，等后期使用`scp`拷贝过去。
 
 ![](.\static\image\image-20210424181408221.png)
@@ -344,9 +353,55 @@ scp -r jdk1.8.0_152/ root@192.168.8.202:/root/module
 scp -r hadoop-3.1.3/ root@192.168.8.202:/opt/modules
 ~~~
 
-#### 2.3.1 Hadoop 配置文件
+修改`/etc/hosts`文件，追加如下内容
 
-|      | 8.201             | 8.202                       | 8.203        |
+~~~text
+192.168.8.201 hadoop201
+192.168.8.202 hadoop202
+192.168.8.203 hadoop203
+~~~
+
+安装 `rsync`
+
+~~~shell
+yum install -y rsync 
+~~~
+
+同步脚本，用于同步机器配置文件
+
+~~~shell
+#!/bin/bash
+
+if [ $# -lt 1 ]
+then
+ echo Not Enough Arguement!
+ exit;
+fi
+
+for host in hadoop202 hadoop203 hadoop201
+do
+ echo ==================== $host ====================
+ #3. 遍历所有目录，挨个发送
+ for file in $@
+ do
+ #4. 判断文件是否存在
+ if [ -e $file ]
+ then
+ #5. 获取父目录
+ pdir=$(cd -P $(dirname $file); pwd)
+ #6. 获取当前文件的名称
+ fname=$(basename $file)
+ ssh $host "mkdir -p $pdir"
+ rsync -av $pdir/$fname $host:$pdir
+ else
+ echo $file does not exists!
+ fi
+ done
+done
+
+#### 2.3.2 Hadoop 配置文件
+
+|      | hadoop201         | hadoop202                   | hadoop203    |
 | ---- | ----------------- | --------------------------- | ------------ |
 | HDFS | NameNode DataNode | DataNode                    | SNN DataNode |
 | YARN | NodeManager       | ResourceManager NodeManager | NodeManager  |
@@ -359,21 +414,21 @@ scp -r hadoop-3.1.3/ root@192.168.8.202:/opt/modules
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
-    <!--指定name node 配置-->
-    <property>
-    	<name>fx.defaultFS</name>
-        <value>hdfs://192.168.8.202:8020</value>
-    </property>
-    <!--指定hadoop 存储目录-->
-    <property>
-    	<name>hadoop.tmp.dir</name>
-        <value>/opt/module/hadoop-3.1.3/data</value>
-    </property>
-    <!--指定hdfs 静态用户-->
-    <property>
-    	<name>hadoop.http.staticuser.user</name>
-        <value>root</value>
-    </property>
+ <!-- 指定 NameNode 的地址 -->
+ <property>
+ <name>fs.defaultFS</name>
+ <value>hdfs://hadoop201:8020</value>
+ </property>
+ <!-- 指定 hadoop 数据的存储目录 -->
+ <property>
+ <name>hadoop.tmp.dir</name>
+ <value>/home/module/hadoop-3.1.3/data</value>
+ </property>
+ <!-- 配置 HDFS 网页登录使用的静态用户为 atguigu -->
+ <property>
+ <name>hadoop.http.staticuser.user</name>
+ <value>root</value>
+ </property>
 </configuration>
 ~~~
 
@@ -383,17 +438,18 @@ HDFS 配置文件
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
-    <!-- name node 访问地址 -->
-	<property>
-    	<name>dfs.namenode.http-address</name>
-        <value>192.168.8.201:9870</value>
-    </property>
-    <!-- second name node 访问地址 -->
-    <property>
-    	<name>dfs.namenode.secondary.http-address</name>
-        <value>192.168.8.203:9868</value>
-    </property>
+<!-- nn web 端访问地址-->
+<property>
+ <name>dfs.namenode.http-address</name>
+ <value>hadoop201:9870</value>
+ </property>
+<!-- 2nn web 端访问地址-->
+ <property>
+ <name>dfs.namenode.secondary.http-address</name>
+ <value>hadoop203:9868</value>
+ </property>
 </configuration>
+
 ~~~
 
 `YARN`配置文件
@@ -401,22 +457,44 @@ HDFS 配置文件
 ~~~xml
 <?xml version="1.0"?>
 <configuration>
-    <!-- 指定MR走shuffle -->
-	<property>
-    	<name>yarn.nodemanager.aux-services</name>
-        <value>mapreduce_shuffle</value>
-    </property>
-	<!-- resourceManager 访问地址 -->
-    <property>
-    	<name>yarn.resourcemanager.hostname</name>
-        <value>192.168.8.202</value>
-    </property>
-    <!-- 环境变量的继承 -->
-    <property>
-    	<name>yarn.nodemanager.env-whitelist</name>
-        <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAFRED_HOME</value>
-    </property>
-
+ <!-- 指定 MR 走 shuffle -->
+ <property>
+ <name>yarn.nodemanager.aux-services</name>
+ <value>mapreduce_shuffle</value>
+ </property>
+ <!-- 指定 ResourceManager 的地址-->
+ <property>
+ <name>yarn.resourcemanager.hostname</name>
+ <value>hadoop202</value>
+ </property>
+ <!-- 环境变量的继承 -->
+ <property>
+ <name>yarn.nodemanager.env-whitelist</name>
+ 
+<value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CO
+NF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAP
+RED_HOME</value>
+ </property>
+    
+<property>
+    <name>yarn.nodemanager.vmem-check-enabled</name>
+    <value>false</value>
+</property>
+    
+<property>
+ <name>yarn.log-aggregation-enable</name>
+ <value>true</value>
+</property>
+<!-- 设置日志聚集服务器地址 -->
+<property> 
+ <name>yarn.log.server.url</name> 
+ <value>http://hadoop201:19888/jobhistory/logs</value>
+</property>
+<!-- 设置日志保留时间为 7 天 -->
+<property>
+ <name>yarn.log-aggregation.retain-seconds</name>
+ <value>604800</value>
+</property>
 </configuration>
 ~~~
 
@@ -431,30 +509,147 @@ MapReduce 配置文件
     	<name>mapreduce.framework.name</name>
         <value>yarn</value>
     </property>
+    <property>
+        <name>yarn.app.mapreduce.am.env</name>
+        <value>HADOOP_MAPRED_HOME=/home/module/hadoop-3.1.3</value>
+        </property>
+    <property>
+        <name>mapreduce.map.env</name>
+        <value>HADOOP_MAPRED_HOME=/home/module/hadoop-3.1.3</value>
+    </property>
+    <property>
+        <name>mapreduce.reduce.env</name>
+        <value>HADOOP_MAPRED_HOME=/home/module/hadoop-3.1.3</value>
+    </property>
+    <property>
+        <name>mapreduce.cluster.map.memory.mb</name>
+        <value>-1</value>
+    </property>
+    <property>
+        <name>mapreduce.cluster.reduce.memory.mb</name>
+        <value>-1</value>
+    </property>
+    
+    <!-- 历史服务器端地址 -->
+<property>
+ <name>mapreduce.jobhistory.address</name>
+ <value>hadoop102:10020</value>
+</property>
+<!-- 历史服务器 web 端地址 -->
+<property>
+ <name>mapreduce.jobhistory.webapp.address</name>
+ <value>hadoop102:19888</value>
+</property>
 </configuration>
 ~~~
 
-vi workers
+`vi workers`
 
 ~~~text
-192.168.8.201
-192.168.8.202
-192.168.8.203
+hadoop201
+hadoop202
+hadoop203
+~~~
+
+分发配置文件
+
+~~~shell
+xsync /home/module/hadoop-3.1.3/etc/hadoop
+~~~
+
+修改启动文件 `sbin/start-dfs.sh`和`sbin/stop-dfs.sh` 和`sbin/start-yarn.sh`和`sbin/stop-yarn.sh`，并分发`xsync /home/module/hadoop-3.1.3/sbin`
+
+~~~shell
+#!/usr/bin/env bash
+HDFS_DATANODE_USER=root
+HADOOP_SECURE_DN_USER=hdfs
+HDFS_NAMENODE_USER=root
+HDFS_SECONDARYNAMENODE_USER=root
+# ...省略
 ~~~
 
 集群初始化
 
 ~~~shell
 hdfs namenode -format
-
-sh start-dfs.sh
+# 启动hdfs
+sbin/start-dfs.sh
 ~~~
 
+到`hadoop202`机器 启动 `resouce manager`  
 
+~~~shell
+sbin/start-yarn.sh
+~~~
 
+查看`http://hadoop201:9870`,[地址](http://hadoop201:9870)
 
+查看`http://hadoop202:8088`,[地址](http://hadoop202:8088)
 
+#### 2.3.3 基础测试
 
+创建目录
+
+~~~shell
+hadoop fs -mkdir /wcinput
+~~~
+
+上传文件
+
+~~~shell
+hadoop fs -put /root/a.txt /wcinput
+# 输出
+2021-05-05 13:15:51,994 INFO sasl.SaslDataTransferClient: SASL encryption trust check: localHostTrusted = false, remoteHostTrusted = false
+~~~
+
+![image-20210505132348730](.\static\image\image-20210505132348730.png)
+
+实际存储在
+
+~~~shell
+cat $HADOOP_HOME/data/dfs/data/current/BP-1065121377-192.168.8.201-1620119427494/current/finalized/subdir0/subdir0/blk_1073741825
+~~~
+
+wordcount
+
+~~~shell
+hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.3.jar wordcount /wcinput /wcoutput
+~~~
+
+编写启动脚本
+
+~~~shell
+#!/bin/bash
+if [ $# -lt 1 ]
+then
+ echo "No Args Input..."
+ exit ;
+fi
+case $1 in
+"start")
+ echo " =================== 启动 hadoop 集群 ==================="
+ echo " --------------- 启动 hdfs ---------------"
+ ssh hadoop201 "/home/module/hadoop-3.1.3/sbin/start-dfs.sh"
+ echo " --------------- 启动 yarn ---------------"
+
+ssh hadoop202 "/home/module/hadoop-3.1.3/sbin/start-yarn.sh"
+ echo " --------------- 启动 historyserver ---------------"
+ ssh hadoop201 "/home/module/hadoop-3.1.3/bin/mapred --daemon start historyserver"
+;;
+"stop")
+ echo " =================== 关闭 hadoop 集群 ==================="
+ echo " --------------- 关闭 historyserver ---------------"
+ ssh hadoop201 "/home/module/hadoop-3.1.3/bin/mapred --daemon stop historyserver"
+ echo " --------------- 关闭 yarn ---------------"
+ ssh hadoop202 "/home/module/hadoop-3.1.3/sbin/stop-yarn.sh"
+ echo " --------------- 关闭 hdfs ---------------"
+ ssh hadoop201 "/home/module/hadoop-3.1.3/sbin/stop-dfs.sh"
+;;
+*)
+ echo "Input Args Error..."
+;;
+esac
+~~~
 
 
 

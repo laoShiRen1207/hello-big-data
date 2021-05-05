@@ -1,0 +1,7 @@
+/pharmacy-organization/target/
+
+*/target/*
+
+*/*.iml
+*.iml
+.idea
