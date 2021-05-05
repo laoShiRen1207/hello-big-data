@@ -398,6 +398,7 @@ do
  fi
  done
 done
+~~~
 
 #### 2.3.2 Hadoop 配置文件
 
@@ -414,21 +415,21 @@ done
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
- <!-- 指定 NameNode 的地址 -->
- <property>
- <name>fs.defaultFS</name>
- <value>hdfs://hadoop201:8020</value>
- </property>
- <!-- 指定 hadoop 数据的存储目录 -->
- <property>
- <name>hadoop.tmp.dir</name>
- <value>/home/module/hadoop-3.1.3/data</value>
- </property>
- <!-- 配置 HDFS 网页登录使用的静态用户为 atguigu -->
- <property>
- <name>hadoop.http.staticuser.user</name>
- <value>root</value>
- </property>
+    <!-- 指定 NameNode 的地址 -->
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://hadoop201:8020</value>
+    </property>
+    <!-- 指定 hadoop 数据的存储目录 -->
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/home/module/hadoop-3.1.3/data</value>
+    </property>
+    <!-- 配置 HDFS 网页登录使用的静态用户为 atguigu -->
+    <property>
+        <name>hadoop.http.staticuser.user</name>
+        <value>root</value>
+    </property>
 </configuration>
 ~~~
 
@@ -438,18 +439,17 @@ HDFS 配置文件
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
-<!-- nn web 端访问地址-->
-<property>
- <name>dfs.namenode.http-address</name>
- <value>hadoop201:9870</value>
- </property>
-<!-- 2nn web 端访问地址-->
- <property>
- <name>dfs.namenode.secondary.http-address</name>
- <value>hadoop203:9868</value>
- </property>
+    <!-- nn web 端访问地址-->
+    <property>
+        <name>dfs.namenode.http-address</name>
+        <value>hadoop201:9870</value>
+    </property>
+    <!-- 2nn web 端访问地址-->
+    <property>
+        <name>dfs.namenode.secondary.http-address</name>
+        <value>hadoop203:9868</value>
+    </property>
 </configuration>
-
 ~~~
 
 `YARN`配置文件
@@ -457,44 +457,42 @@ HDFS 配置文件
 ~~~xml
 <?xml version="1.0"?>
 <configuration>
- <!-- 指定 MR 走 shuffle -->
- <property>
- <name>yarn.nodemanager.aux-services</name>
- <value>mapreduce_shuffle</value>
- </property>
- <!-- 指定 ResourceManager 的地址-->
- <property>
- <name>yarn.resourcemanager.hostname</name>
- <value>hadoop202</value>
- </property>
- <!-- 环境变量的继承 -->
- <property>
- <name>yarn.nodemanager.env-whitelist</name>
- 
-<value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CO
-NF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAP
-RED_HOME</value>
- </property>
-    
-<property>
-    <name>yarn.nodemanager.vmem-check-enabled</name>
-    <value>false</value>
-</property>
-    
-<property>
- <name>yarn.log-aggregation-enable</name>
- <value>true</value>
-</property>
-<!-- 设置日志聚集服务器地址 -->
-<property> 
- <name>yarn.log.server.url</name> 
- <value>http://hadoop201:19888/jobhistory/logs</value>
-</property>
-<!-- 设置日志保留时间为 7 天 -->
-<property>
- <name>yarn.log-aggregation.retain-seconds</name>
- <value>604800</value>
-</property>
+    <!-- 指定 MR 走 shuffle -->
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <!-- 指定 ResourceManager 的地址-->
+    <property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>hadoop202</value>
+    </property>
+    <!-- 环境变量的继承 -->
+    <property>
+        <name>yarn.nodemanager.env-whitelist</name>
+        <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CO
+            NF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAP
+            RED_HOME
+        </value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.vmem-check-enabled</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>yarn.log-aggregation-enable</name>
+        <value>true</value>
+    </property>
+    <!-- 设置日志聚集服务器地址 -->
+    <property>
+        <name>yarn.log.server.url</name>
+        <value>http://hadoop201:19888/jobhistory/logs</value>
+    </property>
+    <!-- 设置日志保留时间为 7 天 -->
+    <property>
+        <name>yarn.log-aggregation.retain-seconds</name>
+        <value>604800</value>
+    </property>
 </configuration>
 ~~~
 
@@ -505,14 +503,14 @@ MapReduce 配置文件
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
     <!-- 指定mapreduce 程序运行在yarn -->
-	<property>
-    	<name>mapreduce.framework.name</name>
+    <property>
+        <name>mapreduce.framework.name</name>
         <value>yarn</value>
     </property>
     <property>
         <name>yarn.app.mapreduce.am.env</name>
         <value>HADOOP_MAPRED_HOME=/home/module/hadoop-3.1.3</value>
-        </property>
+    </property>
     <property>
         <name>mapreduce.map.env</name>
         <value>HADOOP_MAPRED_HOME=/home/module/hadoop-3.1.3</value>
@@ -529,17 +527,16 @@ MapReduce 配置文件
         <name>mapreduce.cluster.reduce.memory.mb</name>
         <value>-1</value>
     </property>
-    
     <!-- 历史服务器端地址 -->
-<property>
- <name>mapreduce.jobhistory.address</name>
- <value>hadoop102:10020</value>
-</property>
-<!-- 历史服务器 web 端地址 -->
-<property>
- <name>mapreduce.jobhistory.webapp.address</name>
- <value>hadoop102:19888</value>
-</property>
+    <property>
+        <name>mapreduce.jobhistory.address</name>
+        <value>hadoop102:10020</value>
+    </property>
+    <!-- 历史服务器 web 端地址 -->
+    <property>
+        <name>mapreduce.jobhistory.webapp.address</name>
+        <value>hadoop102:19888</value>
+    </property>
 </configuration>
 ~~~
 
