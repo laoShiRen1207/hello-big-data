@@ -648,17 +648,124 @@ ssh hadoop202 "/home/module/hadoop-3.1.3/sbin/start-yarn.sh"
 esac
 ~~~
 
+## 3 Shell 操作
 
+### 3.1 基本语法 
 
+`hadoop fs 具体命令 `OR `hdfs dfs 具体命令` 两个是完全相同的。
 
+### 3.2 命令大全
 
+~~~shell
+hadoop fs
 
+[-appendToFile <localsrc> ... <dst>]
+ [-cat [-ignoreCrc] <src> ...]
+ [-chgrp [-R] GROUP PATH...]
+ [-chmod [-R] <MODE[,MODE]... | OCTALMODE> PATH...]
+ [-chown [-R] [OWNER][:[GROUP]] PATH...]
+ [-copyFromLocal [-f] [-p] <localsrc> ... <dst>]
+ [-copyToLocal [-p] [-ignoreCrc] [-crc] <src> ... <localdst>]
+ [-count [-q] <path> ...]
+ [-cp [-f] [-p] <src> ... <dst>]
+ [-df [-h] [<path> ...]]
+ [-du [-s] [-h] <path> ...]
+ [-get [-p] [-ignoreCrc] [-crc] <src> ... <localdst>]
+ [-getmerge [-nl] <src> <localdst>]
+ [-help [cmd ...]]
+ [-ls [-d] [-h] [-R] [<path> ...]]
+ [-mkdir [-p] <path> ...]
+ [-moveFromLocal <localsrc> ... <dst>]
+ [-moveToLocal <src> <localdst>]
+ [-mv <src> ... <dst>]
+ [-put [-f] [-p] <localsrc> ... <dst>]
+ [-rm [-f] [-r|-R] [-skipTrash] <src> ...]
+ [-rmdir [--ignore-fail-on-non-empty] <dir> ...]
+<acl_spec> <path>]]
+ [-setrep [-R] [-w] <rep> <path> ...] 
+ [-stat [format] <path> ...]
+ [-tail [-f] <file>]
+ [-test -[defsz] <path>]
+ [-text [-ignoreCrc] <src> ...]
+~~~
 
+#### 3.2.1 上传和下载
 
+(1) 从本地<span style="color: red">剪切粘贴</span>到 HDFS
 
+~~~shell
+hadoop fs -moveFromLocal ./shuguo.txt /sanguo
+~~~
 
+(2) 从本地文件系统中拷贝文件到 HDFS 路径去
 
+~~~shell
+hadoop fs -copyFromLocal ./weiguo.txt /sanguo
+~~~
 
+等同于`hadoop fs -put filePath dir`
 
+(3) 追加文件到已存在的文件的末尾
 
+~~~shell
+hadoop fs -appendToFile liubei.txt /sanguo/shuguo.txt
+~~~
+
+(4) 从hdfs 拷贝到本地
+
+~~~shell
+hadoop fs -copyToLocal /sanguo/shuguo.txt ./downloadFile.txt
+~~~
+
+等同于`-get`
+
+#### 3.2.2 其他操作
+
+ (1) list file
+
+~~~shell
+hadoop fs -ls /sanguo
+~~~
+
+(2) 显示文件内容 
+
+~~~shell
+hadoop fs -cat /sanguo/shuguo.txt
+~~~
+
+(3) 创建路径
+
+~~~shell
+hadoop fs -mkdir /jinguo
+~~~
+
+(4) 从 HDFS 的一个路径拷贝到 HDFS 的另一个路径  
+
+~~~shell
+hadoop fs -cp /sanguo/shuguo.txt  /jinguo
+~~~
+
+(5) 移动文件
+
+~~~shell
+ hadoop fs -mv /sanguo/wuguo.txt /jinguo
+~~~
+
+(6) 显示一个文件的末尾 1kb 的数据
+
+~~~shell
+hadoop fs -tail /jinguo/shuguo.txt
+~~~
+
+(7) 删除文件或文件夹
+
+~~~shell
+ hadoop fs -rm /sanguo/shuguo.txt
+~~~
+
+(8) 递归删除目录及目录里面内容
+
+~~~shell
+ hadoop fs -rm -r /sanguo
+~~~
 
