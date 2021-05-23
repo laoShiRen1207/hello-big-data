@@ -2,6 +2,7 @@ package com.laoshiren.hello.big.data.common.objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.laoshiren.hello.big.data.common.constant.ResultCode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,11 +37,19 @@ public class ResponseResult<T> implements Serializable {
     private T data;
 
     public static <T> ResponseResult<T> ok(T data) {
-        return new ResponseResult<>(200, "操作成功", data);
+        return new ResponseResult<>(ResultCode.BASE_SUCCESS.getCode(), ResultCode.BASE_SUCCESS.getMessage(), data);
     }
 
-    public static <T> ResponseResult<T> fail(Integer code, String message, T data) {
-        return new ResponseResult<>(code, message, data);
+    public static <T> ResponseResult<T> fail(Integer code,String message) {
+        return new ResponseResult<>(code, message,null);
+    }
+
+    public static <T> ResponseResult<T> fail(ResultCode resultCode, T data) {
+        return new ResponseResult<>(resultCode.getCode(), resultCode.getMessage(),data);
+    }
+
+    public static <T> ResponseResult<T> create(ResultCode resultCode, T data) {
+        return new ResponseResult<>(resultCode.getCode(), resultCode.getMessage(), data);
     }
 
 }

@@ -27,6 +27,7 @@
 
     <modules>
         <module>hello-dependencies</module>
+        <module>hello-commons</module>
         <module>hello-hadoop</module>
     </modules>
 
